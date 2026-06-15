@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="VI NOTE Quiz">
+<meta name="theme-color" content="#7C3AED">
+<link rel="apple-touch-icon" href="">
+<title>VI NOTE 15.06 – Bài Tập</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f5f3ff;min-height:100vh;color:#1a202c}
+header{background:linear-gradient(135deg,#7C3AED,#5b21b6);color:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,0.15)}
+header h1{font-size:1rem;font-weight:700}
+#install-btn{background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.4);color:#fff;padding:5px 10px;border-radius:20px;font-size:0.75rem;cursor:pointer;display:none}
+
+/* ── START SCREEN ── */
+.start-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 16px;min-height:calc(100vh - 56px);text-align:center}
+.start-screen h2{font-size:1.3rem;font-weight:700;color:#5b21b6;margin-bottom:6px}
+.start-screen p{color:#718096;font-size:0.85rem;margin-bottom:20px}
+.count-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;max-width:340px;margin-bottom:20px}
+.count-btn{padding:12px;border-radius:12px;border:2px solid #7C3AED;background:#fff;color:#7C3AED;font-size:0.9rem;font-weight:700;cursor:pointer;transition:all .2s}
+.count-btn:hover,.count-btn.active{background:#7C3AED;color:#fff}
+.start-btn{background:#7C3AED;color:#fff;border:none;padding:14px 36px;border-radius:24px;font-size:1rem;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(124,58,237,0.3)}
+
+/* ── QUIZ SCREEN ── */
+.quiz-screen{display:none;flex-direction:column;min-height:calc(100vh - 56px)}
+.prog-header{padding:10px 14px;background:#fff;border-bottom:1px solid #ede9fe}
+.prog-bar{height:6px;background:#ede9fe;border-radius:3px;overflow:hidden;margin-bottom:6px}
+.prog-fill{height:100%;background:linear-gradient(90deg,#7C3AED,#a78bfa);border-radius:3px;transition:width .3s}
+.prog-info{display:flex;justify-content:space-between;font-size:0.72rem;color:#718096;align-items:center}
+.part-badge{padding:2px 8px;border-radius:8px;font-size:0.7rem;font-weight:700}
+.part-A{background:#ede9fe;color:#5b21b6}
+.part-B{background:#dbeafe;color:#1e40af}
+.part-C{background:#fef3c7;color:#92400e}
+.retry-badge{background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:8px;font-size:0.7rem;font-weight:700}
+
+/* ── NAVIGATOR ── */
+.nav-strip{display:flex;gap:5px;padding:6px 12px;overflow-x:auto;background:#fff;border-bottom:1px solid #ede9fe;align-items:center}
+.nav-q{width:28px;height:28px;border-radius:6px;border:1px solid #e2e8f0;font-size:0.7rem;cursor:pointer;font-weight:600;background:#fff;color:#4a5568;flex-shrink:0;transition:all .15s}
+.nav-q.current{border-color:#7C3AED;background:#7C3AED;color:#fff}
+.nav-q.answered-correct{background:#d1fae5;border-color:#059669;color:#065f46}
+.nav-q.answered-wrong{background:#fee2e2;border-color:#dc2626;color:#991b1b}
+.nav-q.answered{background:#ede9fe;border-color:#7C3AED;color:#5b21b6}
+
+/* ── QUESTION AREA ── */
+.q-area{padding:14px;flex:1}
+.q-box{background:#fff;border-radius:14px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,0.06);margin-bottom:10px}
+.q-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.q-num{font-size:0.75rem;color:#718096;font-weight:600}
+.q-text{font-size:0.93rem;line-height:1.6;color:#1a202c;font-weight:500}
+.reading-box{background:#fffbeb;border-left:4px solid #f59e0b;padding:10px 12px;border-radius:8px;font-size:0.84rem;line-height:1.6;margin-bottom:12px;color:#713f12}
+
+/* ── OPTIONS ── */
+.options{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+.opt{padding:12px 14px;border-radius:10px;border:1.5px solid #e2e8f0;background:#fff;cursor:pointer;font-size:0.86rem;text-align:left;transition:all .2s;display:flex;align-items:flex-start;gap:10px;width:100%}
+.opt:hover:not(:disabled){border-color:#7C3AED;background:#faf5ff}
+.opt:disabled{cursor:default}
+.opt-label{font-weight:700;color:#7C3AED;min-width:20px;flex-shrink:0}
+.opt-text{flex:1;line-height:1.45}
+/* states after answering */
+.opt.correct{border-color:#059669;background:#d1fae5}
+.opt.correct .opt-label{color:#059669}
+.opt.wrong{border-color:#dc2626;background:#fee2e2}
+.opt.wrong .opt-label{color:#dc2626}
+.opt.reveal-correct{border-color:#059669;background:#f0fdf4}
+.opt.reveal-correct .opt-label{color:#059669}
+/* result icon */
+.opt-icon{margin-left:auto;font-size:1rem;flex-shrink:0}
+
+/* ── EXPLANATION BOX ── */
+.explain-box{background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:12px 14px;margin-top:12px;font-size:0.83rem;line-height:1.6;color:#0c4a6e;display:none;animation:fadeIn .3s ease}
+.explain-box.show{display:block}
+.explain-box .ex-title{font-weight:700;color:#0369a1;margin-bottom:5px;font-size:0.8rem;text-transform:uppercase;letter-spacing:.4px}
+.explain-box .ex-word{font-weight:700;color:#1D9E75;font-size:0.95rem}
+.explain-box .ex-meaning{color:#064e3b;margin:3px 0}
+.explain-box .ex-tip{color:#0c4a6e;margin-top:6px;padding-top:6px;border-top:1px solid #bae6fd}
+.explain-box .ex-trap{background:#fff7ed;border-radius:6px;padding:6px 10px;margin-top:6px;color:#92400e;font-size:0.8rem}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── BOTTOM NAV ── */
+.bottom-nav{display:flex;gap:8px;padding:10px 14px;background:#fff;border-top:1px solid #ede9fe;position:sticky;bottom:0;z-index:10}
+.btn-gray{background:#e2e8f0;color:#4a5568;border:none;padding:10px 16px;border-radius:20px;font-size:0.85rem;font-weight:600;cursor:pointer;flex:1}
+.btn-purple{background:#7C3AED;color:#fff;border:none;padding:10px 16px;border-radius:20px;font-size:0.85rem;font-weight:600;cursor:pointer;flex:1}
+
+/* ── RESULT SCREEN ── */
+.result-screen{display:none;flex-direction:column;align-items:center;padding:28px 16px 40px;min-height:calc(100vh - 56px);text-align:center}
+.result-screen h2{font-size:1.4rem;font-weight:700;color:#7C3AED;margin:10px 0 4px}
+.score-ring{width:120px;height:120px;margin:16px auto;position:relative}
+.score-ring svg{transform:rotate(-90deg)}
+.score-num{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:1.6rem;font-weight:700;color:#7C3AED}
+.chips-row{display:flex;gap:8px;margin:12px 0;flex-wrap:wrap;justify-content:center}
+.r-chip{padding:7px 16px;border-radius:14px;font-size:0.82rem;font-weight:700}
+.chip-c{background:#d1fae5;color:#065f46}
+.chip-w{background:#fee2e2;color:#991b1b}
+.chip-s{background:#fef9c3;color:#92400e}
+.result-msg{color:#718096;font-size:0.9rem;margin:4px 0 16px}
+.result-btns{display:flex;flex-direction:column;gap:10px;width:100%;max-width:320px}
+.btn-retry{background:#dc2626;color:#fff;border:none;padding:13px 28px;border-radius:24px;font-size:0.92rem;font-weight:700;cursor:pointer}
+.btn-redo{background:#7C3AED;color:#fff;border:none;padding:13px 28px;border-radius:24px;font-size:0.92rem;font-weight:700;cursor:pointer}
+.wrong-list{width:100%;max-width:400px;background:#fff;border-radius:12px;padding:12px;margin:14px 0;text-align:left;max-height:220px;overflow-y:auto;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+.wrong-item{padding:7px 6px;border-bottom:1px solid #f5f3ff;font-size:0.82rem;display:flex;gap:8px;align-items:flex-start}
+.wrong-item:last-child{border-bottom:none}
+.wrong-num{color:#dc2626;font-weight:700;flex-shrink:0;width:24px}
+.wrong-q{color:#1a202c;line-height:1.4}
+
+/* ── iOS MODAL ── */
+.ios-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:999;align-items:flex-end;justify-content:center}
+.ios-modal.show{display:flex}
+.ios-box{background:#fff;border-radius:20px 20px 0 0;padding:24px;width:100%;max-width:480px}
+.ios-box h3{font-size:1rem;font-weight:700;margin-bottom:12px}
+.ios-step{display:flex;align-items:center;gap:10px;margin:8px 0;font-size:0.85rem;color:#4a5568}
+.ios-close{background:#f0f4f8;border:none;padding:10px;border-radius:12px;width:100%;margin-top:14px;cursor:pointer;font-weight:600}
+</style>
+</head>
+<body>
+<header>
+  <h1>🎯 VI NOTE 15.06 – Bài Tập</h1>
+  <button id="install-btn" onclick="handleInstall()">📲 Cài App</button>
+</header>
+
+<!-- START SCREEN -->
+<div class="start-screen" id="start-screen">
+  <div style="font-size:3rem;margin-bottom:8px">📝</div>
+  <h2>Bài Tập VI NOTE 15.06</h2>
+  <p>Chọn số câu muốn làm:<br><span style="font-size:0.78rem">(Rút ngẫu nhiên từ bộ 50 câu)</span></p>
+  <div class="count-grid">
+    <button class="count-btn" onclick="selectCount(10,this)">10 câu</button>
+    <button class="count-btn" onclick="selectCount(15,this)">15 câu</button>
+    <button class="count-btn active" onclick="selectCount(20,this)">20 câu</button>
+    <button class="count-btn" onclick="selectCount(25,this)">25 câu</button>
+    <button class="count-btn" onclick="selectCount(30,this)">30 câu</button>
+    <button class="count-btn" onclick="selectCount(50,this)">Tất cả (50)</button>
+  </div>
+  <button class="start-btn" onclick="startQuiz()">Bắt đầu làm bài ▶</button>
+</div>
+
+<!-- QUIZ SCREEN -->
+<div class="quiz-screen" id="quiz-screen">
+  <div class="prog-header">
+    <div class="prog-bar"><div class="prog-fill" id="q-prog" style="width:0%"></div></div>
+    <div class="prog-info">
+      <span id="q-num-info">Câu 1/20</span>
+      <span id="q-part-badge" class="part-badge part-A">Phần A</span>
+    </div>
+  </div>
+  <div class="nav-strip" id="nav-strip"></div>
+  <div class="q-area" id="q-area"></div>
+  <div class="bottom-nav">
+    <button class="btn-gray" onclick="goPrevQ()">← Trước</button>
+    <button class="btn-purple" id="submit-btn" onclick="submitQuiz()">Nộp bài ✓</button>
+    <button class="btn-purple" onclick="goNextQ()">Tiếp →</button>
+  </div>
+</div>
+
+<!-- RESULT SCREEN -->
+<div class="result-screen" id="result-screen"></div>
+
+<!-- iOS MODAL -->
+<div class="ios-modal" id="ios-modal">
+  <div class="ios-box">
+    <h3>📲 Cài app lên iPhone</h3>
+    <div class="ios-step">1️⃣ Nhấn <strong>Chia sẻ ⎙</strong> ở Safari</div>
+    <div class="ios-step">2️⃣ Chọn <strong>Thêm vào Màn hình chính</strong></div>
+    <div class="ios-step">3️⃣ Nhấn <strong>Thêm</strong></div>
+    <button class="ios-close" onclick="document.getElementById('ios-modal').classList.remove('show')">Đóng</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  QUESTION BANK  (50 câu, giải thích chi tiết cho TOEIC)
+// ═══════════════════════════════════════════════════════
+const ALL_QS = [
+
+// ─── PHẦN A — TỪ VỰNG (20 câu) ───
+{part:'A',
+ q:"The factory is running at full ___. They can't take more orders.",
+ opts:["capacity","restriction","allocation","bulk"],ans:0,
+ ex:{word:"capacity /kəˈpæsɪti/ (n.)",meaning:"sức chứa, năng lực sản xuất tối đa",tip:"Dùng 'full capacity' = đang chạy hết công suất. Trong TOEIC Part 5-6, capacity thường đi với: production capacity, seating capacity, storage capacity.",trap:"Đừng nhầm với 'capability' (khả năng của người). Capacity = giới hạn vật lý/số lượng."}},
+
+{part:'A',
+ q:"He ___ to the new policy because it was unfair to staff.",
+ opts:["objected","enabled","prompted","aspired"],ans:0,
+ ex:{word:"object /əbˈdʒɛkt/ (v.)",meaning:"phản đối, không đồng ý",tip:"'Object to + N/Ving' = phản đối điều gì. Ví dụ: She objected to working overtime. Trong TOEIC, object (n.) = vật thể /ˈɒbdʒɪkt/, object (v.) = phản đối /əbˈdʒɛkt/ — KHÁC nhau về trọng âm!",trap:"Enable = cho phép (ngược nghĩa). Aspire = khao khát (tích cực)."}},
+
+{part:'A',
+ q:"Are you ___ with the company's new software system?",
+ opts:["familiar","faulty","fluent","flexible"],ans:0,
+ ex:{word:"familiar /fəˈmɪliər/ (adj.)",meaning:"quen thuộc, đã biết về",tip:"'Be familiar with' = quen với (kiến thức, hệ thống). Dạng động từ: familiarize yourself with = chủ động làm quen với. Hay gặp trong TOEIC email: 'Please familiarize yourself with the new procedures.'",trap:"Fluent = thông thạo (ngôn ngữ). Flexible = linh hoạt. Cả hai không phù hợp nghĩa câu này."}},
+
+{part:'A',
+ q:"The prices ___ a lot during the holiday season.",
+ opts:["fluctuate","imitate","hesitate","restrict"],ans:0,
+ ex:{word:"fluctuate /ˈflʌktʃueɪt/ (v.)",meaning:"biến động, dao động lên xuống",tip:"Fluctuate = thay đổi không ổn định theo hai chiều. Trong TOEIC Reading, hay gặp: 'Sales figures fluctuated throughout the quarter.' Danh từ: fluctuation (n.).",trap:"Hesitate = do dự (tâm lý). Restrict = hạn chế (có chủ ý). Cả hai không mô tả sự biến động tự nhiên."}},
+
+{part:'A',
+ q:"Please send all documents ___ email by Friday.",
+ opts:["via","throughout","during","whatever"],ans:0,
+ ex:{word:"via /ˈvaɪə/ (prep.)",meaning:"thông qua (phương tiện/con đường)",tip:"Via + phương tiện: via email, via phone, via courier. Trong TOEIC Listening Part 3-4: 'The report will be distributed via the company intranet.' Cũng dùng cho địa lý: fly via Bangkok.",trap:"Throughout = xuyên suốt (thời gian). During = trong khoảng thời gian. Cả hai chỉ thời gian, không chỉ phương tiện."}},
+
+{part:'A',
+ q:"I'm sorry, that item is currently ___. We expect it back next week.",
+ opts:["on back order","out of order","out of date","out of place"],ans:0,
+ ex:{word:"on back order (phr.)",meaning:"hết hàng tạm thời (đã đặt, đang chờ về)",tip:"On back order = hàng sẽ về, chỉ cần chờ. Trong TOEIC Part 2-3: nhân viên bán hàng hay dùng cụm này khi thông báo khách chờ hàng. KHÁC với out of stock (hết sạch, chưa rõ khi nào có lại).",trap:"Out of order = hỏng (máy móc). Out of date = lỗi thời. Out of place = không phù hợp."}},
+
+{part:'A',
+ q:"The printer is ___. Please use the one on the second floor.",
+ opts:["out of order","out of stock","on back order","malfunctioning"],ans:0,
+ ex:{word:"out of order (phr.)",meaning:"hỏng, không hoạt động được",tip:"Out of order dùng cho máy móc, thiết bị, thang máy... TOEIC hay dùng: 'The elevator is out of order. Please use the stairs.' = faulty = malfunctioning.",trap:"Out of stock = hết hàng (sản phẩm). On back order = đang chờ hàng về. Cả hai dùng cho hàng hóa, KHÔNG dùng cho máy móc."}},
+
+{part:'A',
+ q:"The company will ___ all unnecessary positions to cut costs.",
+ opts:["eliminate","generate","motivate","broadcast"],ans:0,
+ ex:{word:"eliminate /ɪˈlɪmɪneɪt/ (v.)",meaning:"loại bỏ, xóa bỏ hoàn toàn",tip:"Eliminate = delete = remove (mạnh hơn). Hay gặp trong TOEIC memo/email: 'In order to reduce expenses, we will eliminate redundant roles.' Danh từ: elimination (n.).",trap:"Generate = tạo ra (ngược nghĩa). Motivate = thúc đẩy (không liên quan). Broadcast = phát sóng."}},
+
+{part:'A',
+ q:"The CEO announced a major corporate ___ to improve efficiency.",
+ opts:["restructuring","allocation","audit","restriction"],ans:0,
+ ex:{word:"corporate restructuring (n. phr.)",meaning:"tái cấu trúc công ty (thay đổi tổ chức, nhân sự, bộ phận)",tip:"Restructuring = thay đổi cấu trúc lớn. TOEIC Part 7 hay có thông báo nội bộ về restructuring: sáp nhập bộ phận, cắt giảm nhân sự. Từ gốc: restructure (v.).",trap:"Allocation = phân bổ (ngân sách/nguồn lực). Audit = kiểm toán. Restriction = hạn chế. Không từ nào mô tả việc thay đổi cơ cấu công ty."}},
+
+{part:'A',
+ q:"The company will conduct an annual ___ to check financial records.",
+ opts:["audit","patron","broadcast","proposal"],ans:0,
+ ex:{word:"audit /ˈɔːdɪt/ (n./v.)",meaning:"kiểm toán, kiểm tra tài chính độc lập",tip:"Conduct/perform an audit = tiến hành kiểm toán. Trong TOEIC, hay gặp: internal audit, external audit, annual audit. Người kiểm toán = auditor.",trap:"Patron = khách thân thiết. Broadcast = phát sóng. Proposal = đề xuất. Không từ nào liên quan đến kiểm tra tài chính."}},
+
+{part:'A',
+ q:"Don't ___ to ask questions during the training session.",
+ opts:["hesitate","fluctuate","imitate","prohibit"],ans:0,
+ ex:{word:"hesitate /ˈhɛzɪteɪt/ (v.)",meaning:"do dự, ngần ngại",tip:"'Don't hesitate to + V' = đừng ngại làm gì. Cụm này RẤT PHỔ BIẾN trong TOEIC email/memo: 'If you have any questions, please don't hesitate to contact us.' Học thuộc cụm này!",trap:"Prohibit = cấm (không hợp nghĩa, câu mang ý khuyến khích). Fluctuate = biến động (dùng cho số liệu/giá cả)."}},
+
+{part:'A',
+ q:"The new system will ___ employees to work from home.",
+ opts:["enable","forbid","restrict","refrain"],ans:0,
+ ex:{word:"enable /ɪˈneɪbəl/ (v.)",meaning:"cho phép, tạo điều kiện (bởi công cụ/hệ thống)",tip:"Enable = allow = permit. Cấu trúc: enable + sb + to V. Dùng khi HỆ THỐNG/CÔNG NGHỆ tạo điều kiện cho ai làm gì. TOEIC hay gặp: 'This software enables users to track shipments in real time.'",trap:"Forbid/restrict/refrain đều mang nghĩa HẠN CHẾ — ngược hoàn toàn với enable."}},
+
+{part:'A',
+ q:"Photography is strictly ___ inside the museum.",
+ opts:["prohibited","enabled","generated","modified"],ans:0,
+ ex:{word:"prohibit /prəˈhɪbɪt/ (v.)",meaning:"cấm (chính thức, bằng quy định)",tip:"Prohibit = forbid = ban. 'Strictly prohibited' = bị cấm hoàn toàn. Cấu trúc bị động hay gặp trong biển báo TOEIC: 'Smoking is strictly prohibited on the premises.'",trap:"Enable = cho phép (ngược nghĩa). Generated = được tạo ra. Modified = được chỉnh sửa. Cả ba không hợp nghĩa."}},
+
+{part:'A',
+ q:"We placed a ___ to get a better price per unit.",
+ opts:["bulk order","grant proposal","press conference","back order"],ans:0,
+ ex:{word:"bulk order (n. phr.)",meaning:"đơn đặt hàng số lượng lớn",tip:"Bulk = số lượng lớn. Đặt bulk order thường được discount (chiết khấu). TOEIC: 'We are offering a 15% discount for bulk orders over 500 units.' Cũng dùng: buy in bulk = mua số lượng lớn.",trap:"Grant proposal = đề xuất xin tài trợ (không liên quan mua hàng). Press conference = họp báo. Back order = hàng đang chờ giao."}},
+
+{part:'A',
+ q:"The data shows that ___ has dropped significantly this quarter.",
+ opts:["consumer spending","bulk order","corporate audit","press conference"],ans:0,
+ ex:{word:"consumer spending (n. phr.)",meaning:"chi tiêu của người tiêu dùng (tổng lượng tiền dân chúng chi)",tip:"Consumer spending là chỉ số kinh tế quan trọng trong TOEIC Part 7 (bài đọc báo/báo cáo). Khi consumer spending giảm → nền kinh tế yếu đi. Liên quan: consumer confidence, consumer behavior.",trap:"Bulk order, audit, press conference đều là hành động của doanh nghiệp — không phải chỉ số chi tiêu xã hội."}},
+
+{part:'A',
+ q:"The restaurant had to ___ many customers because all tables were full.",
+ opts:["turn away","turn on","tune in","take over"],ans:0,
+ ex:{word:"turn away (v. phr.)",meaning:"từ chối, không tiếp nhận (vì hết chỗ/không đủ điều kiện)",tip:"Turn away customers = không cho vào vì hết chỗ. Dạng bị động: 'Customers were turned away at the door.' Trong TOEIC, hay gặp trong ngữ cảnh nhà hàng, khách sạn, sự kiện đông người.",trap:"Turn on = bật (thiết bị). Tune in = theo dõi (đài phát thanh). Take over = tiếp quản (công ty). Không từ nào mang nghĩa từ chối khách."}},
+
+{part:'A',
+ q:"The team is well ___ with the latest technology.",
+ opts:["equipped","motivated","generated","adjusted"],ans:0,
+ ex:{word:"be equipped with (v. phr.)",meaning:"được trang bị (dụng cụ, thiết bị, kỹ năng)",tip:"'Well-equipped' = được trang bị đầy đủ. Dùng cho phòng họp, team, cơ sở vật chất: 'The lab is equipped with state-of-the-art instruments.' Hay gặp trong TOEIC Part 7 (mô tả địa điểm, dịch vụ).",trap:"Motivated = có động lực (tâm lý). Generated = được tạo ra (sản phẩm/điện năng). Adjusted = được điều chỉnh."}},
+
+{part:'A',
+ q:"She ___ to become a senior manager before age 30.",
+ opts:["aspires","imitates","modifies","restricts"],ans:0,
+ ex:{word:"aspire /əˈspaɪər/ (v.)",meaning:"khao khát, có hoài bão đạt được điều gì lớn",tip:"'Aspire to + N/V' = ước mơ vươn tới. Khác với inspire = truyền cảm hứng. Dạng danh từ: aspiration (n.) — hay dùng trong CV/phỏng vấn TOEIC: 'My aspiration is to lead an international team.'",trap:"Imitate = bắt chước (không phải ước mơ). Modifies = chỉnh sửa. Restricts = hạn chế. Cả ba không diễn tả tham vọng."}},
+
+{part:'A',
+ q:"The company hired a new ___ to handle the accounts.",
+ opts:["bookkeeper","patron","producer","auditor"],ans:0,
+ ex:{word:"bookkeeper /ˈbʊkˌkiːpər/ (n.)",meaning:"kế toán viên (ghi chép sổ sách thu chi hàng ngày)",tip:"Bookkeeper = accountant. Bookkeeping = accounting. KHÁC với auditor = kiểm toán độc lập (từ bên ngoài). Trong TOEIC: 'We are looking for an experienced bookkeeper to manage our daily financial records.'",trap:"Patron = khách hàng thân thiết. Producer = nhà sản xuất. Auditor = kiểm toán (bên ngoài, độc lập)."}},
+
+{part:'A',
+ q:"Please ___ from using your phone during the meeting.",
+ opts:["refrain","forbid","enable","broadcast"],ans:0,
+ ex:{word:"refrain from (v. phr.)",meaning:"kiềm chế, tự kìm lại (lịch sự, tự nguyện)",tip:"'Refrain from + Ving' — dùng khi yêu cầu lịch sự, nhẹ nhàng. Khác với 'forbid' (cấm, mạnh hơn, từ trên xuống). TOEIC hay dùng: 'Please refrain from eating or drinking in the conference room.'",trap:"Forbid = cấm (mang tính áp đặt, không phải tự nguyện). Enable = cho phép (ngược nghĩa). Broadcast = phát sóng."}},
+
+// ─── PHẦN B — HỎI–ĐÁP GIAO TIẾP (20 câu) ───
+{part:'B',
+ q:"'The coffee machine is broken again.' — What is the best response?",
+ opts:["I'll call maintenance. It's out of order again.","Let's bulk order some parts.","We should broadcast this news.","I object to using it."],ans:0,
+ ex:{word:"out of order (phr.)",meaning:"hỏng, không dùng được",tip:"Phản hồi tự nhiên nhất khi nghe 'broken' là dùng từ đồng nghĩa out of order và đề xuất giải pháp (gọi bảo trì). Đây là kỹ năng TOEIC Part 2: chọn phản hồi phù hợp ngữ cảnh nhất.",trap:"Bulk order parts = đặt phụ tùng số lượng lớn (không hợp lý cho một máy cà phê văn phòng). Broadcast = phát sóng (quá phức tạp cho vấn đề nhỏ)."}},
+
+{part:'B',
+ q:"'We need to cut the department budget by 20%.' — How do you respond?",
+ opts:["That might mean we need to eliminate some projects.","Let's generate a press conference.","We should imitate other companies.","I'll allocate a bulk order."],ans:0,
+ ex:{word:"eliminate (v.)",meaning:"loại bỏ (dự án, chi phí không cần thiết)",tip:"Khi nghe 'cut budget' → hành động logic là eliminate (cắt bỏ) các hạng mục không thiết yếu. Trong TOEIC Part 3, câu hỏi 'What will the speakers most likely do?' cần logic cause-effect như thế này.",trap:"Generate a press conference = họp báo (không liên quan tài chính nội bộ). Imitate = bắt chước (không phải giải pháp). Allocate a bulk order = mâu thuẫn với việc cắt giảm chi phí."}},
+
+{part:'B',
+ q:"'Are you familiar with our new booking system?' — What's the best answer?",
+ opts:["Not yet, but I'm familiarizing myself with it.","No, I object to it.","I tend to fluctuate my usage.","Yes, it's out of stock."],ans:0,
+ ex:{word:"familiarize yourself with (v. phr.)",meaning:"chủ động làm quen với (hệ thống, quy trình)",tip:"Cách trả lời chuyên nghiệp: thừa nhận chưa quen nhưng đang chủ động học (familiarize myself). Trong TOEIC Part 2, chọn phản hồi thể hiện thái độ tích cực và sử dụng đúng từ vựng liên quan.",trap:"'I object to it' = phản đối hệ thống (quá tiêu cực). 'Out of stock' dùng cho hàng hóa, không phải hệ thống phần mềm."}},
+
+{part:'B',
+ q:"'The product you ordered is unavailable right now.' — What does the seller likely say?",
+ opts:["I'm sorry, it's on back order. We'll ship it next week.","It's out of order. Please try again.","We prohibit this item.","The patron already took it."],ans:0,
+ ex:{word:"on back order (phr.)",meaning:"hàng đang được đặt lại, sẽ có trong thời gian tới",tip:"Phân biệt 3 cụm quan trọng trong TOEIC: (1) on back order = đang chờ hàng về, (2) out of stock = hết sạch, (3) out of order = hỏng (máy móc). Nhân viên bán hàng dùng 'on back order' kèm hẹn ngày giao.",trap:"Out of order sai ngữ cảnh (máy móc, không phải hàng hóa). Prohibit this item = cấm sản phẩm (nghe như hàng bị thu hồi)."}},
+
+{part:'B',
+ q:"'How do we reach more customers?' — What's a good suggestion?",
+ opts:["We could broadcast our promotion via social media.","We should audit our patrons.","Let's hesitate before deciding.","We can restrict our advertising."],ans:0,
+ ex:{word:"broadcast via (v. + prep.)",meaning:"phát/lan truyền thông tin qua (kênh truyền thông)",tip:"Broadcast + via + kênh = cách quảng bá thực tế. Trong TOEIC, broadcast dùng cho truyền thông đại chúng: broadcast via radio, TV, social media. Kết hợp với via = rõ kênh truyền tải.",trap:"Audit patrons = kiểm toán khách hàng (không có nghĩa). Restrict advertising = hạn chế quảng cáo (ngược với mục tiêu tiếp cận thêm khách)."}},
+
+{part:'B',
+ q:"'Why are we losing so many regular customers?' — What's the most likely reason?",
+ opts:["We've been turning away patrons because of limited seating.","We restrict our bulk orders.","We imitate competitor pricing.","We fluctuate our generation."],ans:0,
+ ex:{word:"turn away patrons (v. phr.)",meaning:"từ chối không tiếp khách thường xuyên (vì hết chỗ)",tip:"Khi khách bị turn away nhiều lần, họ sẽ tìm chỗ khác. Patron = khách thân thiết/quen thuộc. Trong TOEIC Part 3-4, ngữ cảnh nhà hàng/dịch vụ hay đề cập vấn đề hết chỗ → mất khách.",trap:"Restrict bulk orders = không liên quan đến mất khách hàng cá nhân. Imitate pricing = có thể là chiến lược, không phải lý do mất khách."}},
+
+{part:'B',
+ q:"'How should we improve food safety at the cafe?' — What's the best answer?",
+ opts:["We need to pay more attention to hygiene standards.","We should generate a restriction.","Let's prohibit the bookkeeper.","We can broadcast the audit."],ans:0,
+ ex:{word:"hygiene /ˈhaɪdʒiːn/ (n.)",meaning:"vệ sinh (an toàn thực phẩm, sạch sẽ)",tip:"Food safety liên quan trực tiếp đến hygiene standards. TOEIC Part 7 hay có bài về food safety regulations, health inspection. Hygiene thường đi với: food hygiene, personal hygiene, hygiene standards/regulations.",trap:"'Generate a restriction' và 'prohibit the bookkeeper' không hợp nghĩa. 'Broadcast the audit' = thông báo kết quả kiểm toán (không giải quyết vấn đề vệ sinh)."}},
+
+{part:'B',
+ q:"'Should we order 500 or 1000 units?' — Which option saves more money?",
+ opts:["A bulk order of 1000 units will reduce the cost per unit.","On back order is cheaper.","Let's audit the patrons first.","We should restrict our capacity."],ans:0,
+ ex:{word:"bulk order (n. phr.)",meaning:"đặt hàng số lượng lớn (thường được giảm giá)",tip:"Bulk order → cost per unit thấp hơn → tiết kiệm tổng thể. Đây là logic kinh doanh cơ bản hay gặp trong TOEIC email/memo về procurement (mua hàng). Từ liên quan: unit price, volume discount, wholesale.",trap:"On back order là trạng thái hàng hóa, không phải cách đặt hàng. Audit patrons không liên quan đến quyết định số lượng đặt hàng."}},
+
+{part:'B',
+ q:"'I want to become a team leader someday.' — How do you encourage them?",
+ opts:["That's great! You should aspire to develop your leadership skills.","You need to imitate your manager more.","Don't hesitate to restrict yourself.","I'll broadcast your goal."],ans:0,
+ ex:{word:"aspire to (v. phr.)",meaning:"nuôi dưỡng tham vọng, hướng tới mục tiêu cao",tip:"Aspire to + N hoặc aspire to + V. Dùng để động viên ai đó theo đuổi mục tiêu lớn. Khác với inspire (truyền cảm hứng từ bên ngoài). TOEIC: 'She aspires to be a director within five years.'",trap:"Imitate manager = bắt chước (thiếu tính sáng tạo, không phải lời khuyến khích). Restrict yourself = tự hạn chế (ngược lại với mục tiêu phát triển)."}},
+
+{part:'B',
+ q:"'Our software keeps crashing.' — What might be the problem?",
+ opts:["It might be faulty. We should get IT to check it.","It's on back order.","We need to broadcast a fix.","It's out of stock."],ans:0,
+ ex:{word:"faulty /ˈfɔːlti/ (adj.)",meaning:"bị lỗi, có khiếm khuyết (sản phẩm, hệ thống)",tip:"Faulty = malfunctioning = defective. Dùng cho phần mềm, sản phẩm, thiết bị. TOEIC hay gặp: 'The machine was returned due to a faulty component.' Danh từ: fault (n.) = lỗi kỹ thuật.",trap:"On back order và out of stock dùng cho hàng hóa vật lý, không dùng cho phần mềm đang crash. Broadcast a fix không phải cách xử lý IT chuẩn."}},
+
+{part:'B',
+ q:"'Why did our costs go up this month?' — How does the manager explain?",
+ opts:["Consumer spending in our sector has increased, raising supply costs.","We broadcast our restriction.","Our patron placed a bulk order.","We generated an audit."],ans:0,
+ ex:{word:"consumer spending (n. phr.)",meaning:"chi tiêu của người tiêu dùng (ảnh hưởng đến giá cả thị trường)",tip:"Khi consumer spending tăng → nhu cầu cao → supply costs tăng. Đây là mối quan hệ kinh tế hay xuất hiện trong TOEIC Part 7 dạng bài báo tài chính. Từ liên quan: inflation, demand, market trends.",trap:"Patron placed a bulk order = một khách hàng, không ảnh hưởng đến chi phí tổng thể. Generated an audit = không giải thích nguyên nhân chi phí tăng."}},
+
+{part:'B',
+ q:"'We need funding for our new project.' — What should the team prepare?",
+ opts:["Let's prepare a grant proposal and submit it before the deadline.","We should broadcast our capacity.","Let's imitate another allocation.","We can generate a back order."],ans:0,
+ ex:{word:"grant proposal (n. phr.)",meaning:"đề xuất tài trợ (văn bản xin cấp kinh phí từ tổ chức/quỹ)",tip:"Grant = khoản tài trợ (không hoàn lại). Proposal = đề xuất có cấu trúc. TOEIC Part 7 hay có email về funding request, grant applications, project proposals. Deadline = ngày hết hạn nộp.",trap:"Broadcast capacity = phát thông tin về năng lực (không phải cách xin tài trợ). Generate a back order = đặt hàng (không liên quan tài chính dự án)."}},
+
+{part:'B',
+ q:"'How do we distribute the budget fairly?' — What process is needed?",
+ opts:["We need a clear budget allocation plan across all departments.","We should prohibit the audit.","Let's imitate last year's patron list.","We can broadcast a restriction."],ans:0,
+ ex:{word:"allocation /ˌæləˈkeɪʃən/ (n.)",meaning:"sự phân bổ (nguồn lực, ngân sách, thời gian)",tip:"Budget allocation = phân bổ ngân sách cho các bộ phận. TOEIC Part 7 hay có memo về resource allocation. Động từ: allocate (v.) — 'Each department will be allocated a fixed budget.'",trap:"Prohibit the audit = cấm kiểm toán (phi logic khi đang bàn về minh bạch tài chính). Broadcast a restriction = thông báo hạn chế (không phải cách phân bổ ngân sách)."}},
+
+{part:'B',
+ q:"'How do I send the report to the whole team?' — What's the best answer?",
+ opts:["You can send it via email or share it on our cloud drive.","Broadcast it via patron.","Put it on back order.","Familiarize the audit."],ans:0,
+ ex:{word:"via (prep.)",meaning:"thông qua (kênh gửi: email, drive, fax...)",tip:"Via + phương tiện = cách truyền tải thực tế, lịch sự. TOEIC Part 2: 'How can I reach you?' — 'You can contact me via email.' Cũng dùng: via phone, via courier, via the portal.",trap:"'Broadcast via patron' không có nghĩa trong ngữ cảnh gửi báo cáo nội bộ. 'On back order' dùng cho hàng hóa, không phải tài liệu."}},
+
+{part:'B',
+ q:"'What do you call someone who manages company accounts daily?'",
+ opts:["A bookkeeper or accountant handles that.","A patron does that.","A broadcaster manages that.","A producer audits that."],ans:0,
+ ex:{word:"bookkeeper = accountant (n.)",meaning:"kế toán viên (quản lý sổ sách, thu chi hàng ngày)",tip:"Bookkeeper tập trung vào ghi chép hằng ngày. Accountant có phạm vi rộng hơn: phân tích, báo cáo thuế. KHÁC với auditor (kiểm toán độc lập, thường từ bên ngoài). Trong TOEIC: 'Our bookkeeper will process the invoice.'",trap:"Patron = khách hàng. Broadcaster = người dẫn chương trình truyền hình. Producer = nhà sản xuất. Cả ba không làm công việc kế toán."}},
+
+{part:'B',
+ q:"'Our sales numbers keep changing every week.' — How do you describe this?",
+ opts:["Our revenue tends to fluctuate depending on the season.","We prohibit steady growth.","The bulk order enables this.","Our patron generates changes."],ans:0,
+ ex:{word:"fluctuate / tend to (v.)",meaning:"biến động / có xu hướng (mô tả pattern)",tip:"'Tend to fluctuate' = thường xuyên biến động theo chu kỳ. Trong TOEIC Part 7, biểu đồ và bảng số liệu hay dùng: 'Sales figures tend to fluctuate in Q4.' Tend to + V = xu hướng thường thấy.",trap:"Prohibit steady growth = cấm tăng trưởng ổn định (vô nghĩa về mặt kinh doanh). Bulk order enables changes = không diễn tả được sự biến động số liệu."}},
+
+{part:'B',
+ q:"'The singer will perform live at the city theater this weekend.' — What's the announcement?",
+ opts:["The production will be broadcast live from the theater.","The patron will audit the press conference.","The bookkeeper will motivate the cast.","The grant proposal enables the show."],ans:0,
+ ex:{word:"broadcast live / production (n.)",meaning:"phát sóng trực tiếp / vở diễn/chương trình biểu diễn",tip:"Production = một chương trình nghệ thuật hoặc sự kiện (concert, theater show). Broadcast live = phát trực tiếp. TOEIC Part 4 hay có announcement về sự kiện giải trí, concert, theater.",trap:"Patron audit press conference = sai cả ngữ pháp lẫn ngữ nghĩa. Bookkeeper motivate cast = kế toán không có vai trò với diễn viên."}},
+
+{part:'B',
+ q:"'What was announced at the press conference yesterday?' — What did the CEO say?",
+ opts:["The CEO confirmed a new employee wellness program would be launched.","The patron motivated a bulk order.","They broadcast a faulty audit.","The bookkeeper generated a restriction."],ans:0,
+ ex:{word:"press conference (n. phr.)",meaning:"họp báo (sự kiện công bố thông tin chính thức với báo giới)",tip:"Trong TOEIC Part 4 (announcement/news), press conference hay xuất hiện khi công ty công bố thông tin lớn: sản phẩm mới, thay đổi lãnh đạo, kế hoạch chiến lược. 'Confirm' = xác nhận chính thức.",trap:"Patron + bulk order không liên quan đến họp báo. 'Faulty audit' = kiểm toán bị lỗi (không logic để broadcast)."}},
+
+{part:'B',
+ q:"'Why should we act now instead of waiting?' — How does the manager justify?",
+ opts:["We should take advantage of the low interest rates before they change.","We should prohibit the patron from acting.","Let's broadcast a restriction instead.","We can audit our hesitation."],ans:0,
+ ex:{word:"take advantage of (v. phr.)",meaning:"tận dụng (cơ hội, điều kiện thuận lợi)",tip:"'Take advantage of' = khai thác cơ hội đang có. TOEIC hay gặp: 'Take advantage of our limited-time offer.' / 'Companies should take advantage of low interest rates to expand.' Cơ hội có giới hạn thời gian!",trap:"Prohibit the patron from acting = cấm khách hàng hành động (ngược với mục tiêu). Audit our hesitation = kiểm toán sự do dự (không có nghĩa thực tế)."}},
+
+{part:'B',
+ q:"'I feel so inspired after the workshop!' — How do you respond naturally?",
+ opts:["That's wonderful! Being motivated like that will really help your growth.","You should prohibit that feeling.","Let's broadcast your inspiration.","We need to audit your capacity."],ans:0,
+ ex:{word:"motivated / inspired (adj.)",meaning:"có động lực / được truyền cảm hứng",tip:"Inspired (adj.) = được truyền cảm hứng (từ bên ngoài tác động vào). Motivated (adj.) = có động lực (cả bên trong lẫn bên ngoài). Cả hai dùng phổ biến trong TOEIC email xã giao và cuộc trò chuyện về phát triển bản thân.",trap:"Prohibit that feeling = cấm cảm xúc (hoàn toàn phi tự nhiên trong giao tiếp). Audit your capacity = kiểm tra năng lực (ngữ cảnh không phù hợp với lời khen ngợi)."}},
+
+// ─── PHẦN C — ĐỌC HIỂU (10 câu = 5 đoạn × 2) ───
+{part:'C',
+ reading:"Manager: Our new theater production will be broadcast live this Saturday.\nStaff: That's exciting! Will the original cast members be featured?\nManager: Yes, the press conference confirmed it. We expect a huge turnout.",
+ q:"What was confirmed at the press conference?",
+ opts:["The original cast members would be featured.","The broadcast was cancelled.","The patron objected to the show.","The audit was completed."],ans:0,
+ ex:{word:"confirmed at the press conference",meaning:"được xác nhận chính thức tại họp báo",tip:"TOEIC Part 7 kỹ năng: 'Scan for keywords.' Câu hỏi hỏi 'what was confirmed' → tìm động từ 'confirmed' trong đoạn → 'the press conference confirmed it' (ngụ ý 'it' = original cast members would be featured.",trap:"Đọc kỹ: 'It' trong 'confirmed it' không có nghĩa là broadcast bị hủy. Press conference = nơi XÁC NHẬN thông tin, không phải kiểm toán."}},
+
+{part:'C',
+ reading:"Manager: Our new theater production will be broadcast live this Saturday.\nStaff: That's exciting! Will the original cast members be featured?\nManager: Yes, the press conference confirmed it. We expect a huge turnout.",
+ q:"What does 'broadcast' mean in this context?",
+ opts:["To transmit/air live on TV or radio","To restrict access to the event","To audit the show financially","To generate a bulk order for tickets"],ans:0,
+ ex:{word:"broadcast /ˈbrɔːdkɑːst/ (v./n.)",meaning:"phát sóng (truyền hình, radio, livestream)",tip:"Broadcast live = phát trực tiếp. TOEIC hay gặp trong các bài về truyền thông, entertainment: 'The ceremony will be broadcast live on Channel 5.' Tính từ: live broadcast. Danh từ: broadcast (cũng là broadcast, không thêm -s khi singular).",trap:"Broadcast không liên quan đến kiểm toán tài chính hay hạn chế quyền vào cửa. Đây là từ thuần ngữ cảnh truyền thông."}},
+
+{part:'C',
+ reading:"Customer: I'd like to order 500 units of your product.\nSales: I'm sorry, that item is currently on back order.\nCustomer: When will it be available?\nSales: We expect stock to arrive within two weeks.",
+ q:"Why can't the customer get the product immediately?",
+ opts:["It is on back order — stock is expected soon.","It is out of order — the machine is broken.","It is permanently discontinued.","It is forbidden to purchase."],ans:0,
+ ex:{word:"on back order",meaning:"hàng tạm hết, đã đặt lại với nhà cung cấp, chờ về",tip:"3 cụm dễ nhầm trong TOEIC: ON BACK ORDER (hàng sẽ về) ≠ OUT OF STOCK (hết sạch, chưa rõ khi nào) ≠ OUT OF ORDER (máy hỏng). Trong đoạn, nhân viên nói hàng sẽ về trong 2 tuần → đây là on back order, không phải discontinued.",trap:"Out of order dùng cho THIẾT BỊ hỏng, không phải hàng hóa. Discontinued = ngừng sản xuất vĩnh viễn (mâu thuẫn với 'stock arrives in 2 weeks')."}},
+
+{part:'C',
+ reading:"Customer: I'd like to order 500 units of your product.\nSales: I'm sorry, that item is currently on back order.\nCustomer: When will it be available?\nSales: We expect stock to arrive within two weeks.",
+ q:"What does 'on back order' tell us about the product?",
+ opts:["It is temporarily unavailable but will be restocked.","It is permanently discontinued.","It is currently malfunctioning.","It is banned from sale."],ans:0,
+ ex:{word:"on back order vs. discontinued",meaning:"hết hàng tạm thời (sẽ về) ≠ ngừng kinh doanh vĩnh viễn",tip:"Key evidence: 'We expect stock to arrive within two weeks' → hàng SẼ về → temporarily unavailable. TOEIC Part 7: luôn đọc toàn đoạn trước khi chọn. Một chi tiết nhỏ ('within two weeks') thay đổi hoàn toàn đáp án.",trap:"Malfunctioning = hỏng hóc (dùng cho thiết bị, không phải sản phẩm đặt hàng). Banned = bị cấm (không có bằng chứng trong đoạn)."}},
+
+{part:'C',
+ reading:"Lisa: The cafe was completely full last night. We had to turn away at least 20 patrons.\nMike: That's a lot! Maybe it's time we seriously consider adding more seating.\nLisa: Agreed. We could make good use of the extra space in the back.",
+ q:"What problem does the cafe currently face?",
+ opts:["Insufficient seating, forcing them to turn away loyal customers.","The food has run out of stock.","The bookkeeper made accounting errors.","The broadcast equipment failed."],ans:0,
+ ex:{word:"turn away patrons / insufficient seating",meaning:"từ chối khách vì không đủ chỗ ngồi",tip:"TOEIC Part 3 kỹ năng: identify the problem. Đoạn nói 'completely full' + 'turn away patrons' + giải pháp 'adding more seating' → vấn đề rõ ràng là thiếu chỗ. Patron = khách thân thiết, không phải khách lạ.",trap:"Out of stock dùng cho hàng hóa, không phải chỗ ngồi. Broadcast equipment không được đề cập trong đoạn — TOEIC trap: chọn đáp án có từ xuất hiện trong đoạn nhưng sai ngữ cảnh."}},
+
+{part:'C',
+ reading:"Lisa: The cafe was completely full last night. We had to turn away at least 20 patrons.\nMike: That's a lot! Maybe it's time we seriously consider adding more seating.\nLisa: Agreed. We could make good use of the extra space in the back.",
+ q:"What does the word 'patron' mean in this passage?",
+ opts:["A regular/loyal customer of the cafe","A type of seating arrangement","An employee who manages the space","A financial backer or investor"],ans:0,
+ ex:{word:"patron /ˈpeɪtrən/ (n.)",meaning:"khách hàng thân thiết, người lui tới thường xuyên",tip:"Patron = regular customer (trong ngữ cảnh nhà hàng, quán). Nghĩa khác: patron of the arts = nhà tài trợ nghệ thuật. TOEIC Part 7: vocabulary-in-context — phải đọc nghĩa phù hợp với đoạn. Đây là nhà hàng → patron = loyal customer.",trap:"Patron KHÔNG phải là nhân viên. Trong ngữ cảnh kinh doanh nghệ thuật, patron mới có nghĩa 'nhà tài trợ' — nhưng đây là cafe, không phải gallery/theater."}},
+
+{part:'C',
+ reading:"HR Email: As part of our corporate restructuring, several positions will be eliminated. Employees are encouraged to familiarize themselves with the new allocation of roles. Further details will be shared via email.",
+ q:"What is happening at the company according to the email?",
+ opts:["A corporate restructuring is underway, with some positions being cut.","A new bulk order policy is being introduced.","The company is undergoing a financial audit.","New patrons are being recruited as customers."],ans:0,
+ ex:{word:"corporate restructuring / eliminate positions",meaning:"tái cấu trúc công ty / cắt giảm vị trí",tip:"TOEIC Part 7: đọc email nội bộ (internal memo). Key phrases: 'corporate restructuring' + 'positions will be eliminated' → rõ ràng là cắt giảm nhân sự. Đây là dạng bài TOEIC Part 6-7 rất phổ biến.",trap:"Audit = kiểm toán (không được đề cập trong email). Bulk order = mua hàng số lượng lớn (không liên quan HR). New patrons = tuyển khách hàng (sai, đây là email HR về nhân sự nội bộ)."}},
+
+{part:'C',
+ reading:"HR Email: As part of our corporate restructuring, several positions will be eliminated. Employees are encouraged to familiarize themselves with the new allocation of roles. Further details will be shared via email.",
+ q:"What does 'allocation of roles' mean in this email?",
+ opts:["How jobs and duties are distributed among staff after restructuring.","A method to conduct a financial audit.","A bulk purchasing agreement with suppliers.","A restriction on employee working hours."],ans:0,
+ ex:{word:"allocation of roles",meaning:"sự phân bổ vai trò/trách nhiệm cho nhân viên",tip:"Allocation (phân bổ) + roles (vai trò) = cách các trách nhiệm được chia sau tái cấu trúc. TOEIC vocabulary-in-context: 'familiarize themselves with the new allocation of roles' → nhân viên cần làm quen với cơ cấu phân công mới.",trap:"Financial audit = kiểm toán tài chính (allocation dùng cho nguồn lực/vai trò, không chỉ tiền bạc). Working hours restriction không được đề cập — đừng đoán thêm thông tin ngoài đoạn văn."}},
+
+{part:'C',
+ reading:"Tom: I heard the new gym equipment is faulty.\nAnna: Yes, three machines are out of order. The supplier is sending replacements.\nTom: Do they have enough capacity to handle our bulk order?\nAnna: They said delivery might be delayed.",
+ q:"Why are the three machines currently unusable?",
+ opts:["They are faulty and out of order.","They are on back order from the supplier.","They are prohibited by regulations.","They are being broadcast for advertisement."],ans:0,
+ ex:{word:"faulty = out of order (adj. / phr.)",meaning:"bị lỗi = không hoạt động được (cùng nghĩa trong ngữ cảnh này)",tip:"Faulty (adj.) = có khiếm khuyết kỹ thuật. Out of order (phr.) = kết quả của sự cố đó → máy không dùng được. Hai từ này đồng nghĩa trong ngữ cảnh thiết bị hỏng. TOEIC hay gặp cả hai, cần nhận ra sự tương đương.",trap:"On back order = hàng chờ giao, không phải máy đang hỏng. Prohibited = bị cấm (không có bằng chứng trong đoạn). 'Being broadcast' = đang phát sóng (hoàn toàn sai ngữ cảnh)."}},
+
+{part:'C',
+ reading:"Tom: I heard the new gym equipment is faulty.\nAnna: Yes, three machines are out of order. The supplier is sending replacements.\nTom: Do they have enough capacity to handle our bulk order?\nAnna: They said delivery might be delayed.",
+ q:"What concern does Tom raise about the supplier?",
+ opts:["Whether they have enough capacity to fulfill the large bulk order.","Whether they will broadcast information about the delay.","Whether the patron has already objected to the delivery.","Whether an audit of the order has been completed."],ans:0,
+ ex:{word:"capacity to handle bulk order",meaning:"năng lực (sản xuất/xử lý) đủ để thực hiện đơn hàng lớn",tip:"Tom hỏi 'Do they have enough capacity?' = lo ngại nhà cung cấp có đủ khả năng (capacity) xử lý đơn hàng số lượng lớn (bulk order) không. Đây là câu hỏi inference trong TOEIC Part 3/7: hiểu ý đằng sau lời nói.",trap:"Broadcast the delay = thông báo trễ hàng (không phải lo ngại của Tom). Patron objected = không đề cập trong đoạn. Audit of order = không được nhắc tới."}},
+];
+
+// ═══════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════
+let selectedCount = 20;
+let activeQs = [], answers = [], curIdx = 0;
+let isRetryMode = false; // true khi đang ôn câu sai
+let wrongIdxInActive = []; // index trong activeQs của câu sai
+
+function selectCount(n, btn) {
+  selectedCount = n;
+  document.querySelectorAll('.count-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function pickQuestions(n) {
+  const a = ALL_QS.filter(q => q.part === 'A');
+  const b = ALL_QS.filter(q => q.part === 'B');
+  const c = ALL_QS.filter(q => q.part === 'C');
+  const total = ALL_QS.length;
+  if (n >= total) return shuffle([...ALL_QS]);
+  const na = Math.round(n * a.length / total);
+  const nb = Math.round(n * b.length / total);
+  const nc = Math.max(0, n - na - nb);
+  return [...shuffle(a).slice(0, na), ...shuffle(b).slice(0, nb), ...shuffle(c).slice(0, nc)];
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// ═══════════════════════════════════════════════════════
+//  QUIZ FLOW
+// ═══════════════════════════════════════════════════════
+function startQuiz() {
+  activeQs = pickQuestions(selectedCount);
+  answers = new Array(activeQs.length).fill(-1);
+  curIdx = 0;
+  isRetryMode = false;
+  document.getElementById('start-screen').style.display = 'none';
+  const qs = document.getElementById('quiz-screen');
+  qs.style.display = 'flex';
+  qs.style.flexDirection = 'column';
+  buildNav();
+  renderQ();
+}
+
+function startRetry(wrongQs) {
+  activeQs = wrongQs;
+  answers = new Array(activeQs.length).fill(-1);
+  curIdx = 0;
+  isRetryMode = true;
+  document.getElementById('result-screen').style.display = 'none';
+  const qs = document.getElementById('quiz-screen');
+  qs.style.display = 'flex';
+  qs.style.flexDirection = 'column';
+  buildNav();
+  renderQ();
+}
+
+function buildNav() {
+  const ns = document.getElementById('nav-strip');
+  ns.innerHTML = activeQs.map((_, i) =>
+    `<button class="nav-q${i === curIdx ? ' current' : ''}" id="nb${i}" onclick="jumpQ(${i})">${i + 1}</button>`
+  ).join('');
+}
+
+function updateNav() {
+  activeQs.forEach((_, i) => {
+    const b = document.getElementById('nb' + i);
+    if (!b) return;
+    b.className = 'nav-q';
+    if (i === curIdx) {
+      b.classList.add('current');
+    } else if (answers[i] !== -1) {
+      const isCorrect = answers[i] === activeQs[i].ans;
+      b.classList.add(isCorrect ? 'answered-correct' : 'answered-wrong');
+    }
+  });
+}
+
+function jumpQ(i) { curIdx = i; renderQ(); }
+function goPrevQ() { if (curIdx > 0) { curIdx--; renderQ(); } }
+function goNextQ() { if (curIdx < activeQs.length - 1) { curIdx++; renderQ(); } }
+
+// ═══════════════════════════════════════════════════════
+//  RENDER QUESTION — instant feedback after selecting
+// ═══════════════════════════════════════════════════════
+function renderQ() {
+  const q = activeQs[curIdx];
+  const answered = answers[curIdx] !== -1;
+  const pct = Math.round((curIdx + 1) / activeQs.length * 100);
+
+  document.getElementById('q-prog').style.width = pct + '%';
+  document.getElementById('q-num-info').textContent = `Câu ${curIdx + 1}/${activeQs.length}`;
+
+  const pb = document.getElementById('q-part-badge');
+  if (isRetryMode) {
+    pb.textContent = '🔁 Ôn lại câu sai';
+    pb.className = 'retry-badge';
+  } else {
+    pb.textContent = `Phần ${q.part}`;
+    pb.className = 'part-badge part-' + q.part;
+  }
+
+  const labels = ['A', 'B', 'C', 'D'];
+  let html = '<div class="q-box">';
+  html += `<div class="q-meta"><span class="q-num">Câu ${curIdx + 1} / ${activeQs.length}</span></div>`;
+  if (q.reading) html += `<div class="reading-box">${q.reading.replace(/\n/g, '<br>')}</div>`;
+  html += `<div class="q-text">${q.q}</div>`;
+  html += `<div class="options">`;
+  q.opts.forEach((o, i) => {
+    let cls = 'opt';
+    let icon = '';
+    if (answered) {
+      if (i === q.ans) {
+        cls += ' correct';
+        icon = '<span class="opt-icon">✅</span>';
+      } else if (i === answers[curIdx] && answers[curIdx] !== q.ans) {
+        cls += ' wrong';
+        icon = '<span class="opt-icon">❌</span>';
+      }
+    } else if (answers[curIdx] === i) {
+      cls += ' selected';
+    }
+    const disabled = answered ? ' disabled' : '';
+    html += `<button class="${cls}"${disabled} onclick="selectOpt(${i})">
+      <span class="opt-label">${labels[i]}</span>
+      <span class="opt-text">${o}</span>
+      ${icon}
+    </button>`;
+  });
+  html += '</div>';
+
+  // Explanation — shown immediately after answering
+  if (answered && q.ex) {
+    const isCorrect = answers[curIdx] === q.ans;
+    html += `<div class="explain-box show">
+      <div class="ex-title">${isCorrect ? '✅ Chính xác!' : '❌ Chưa đúng — Giải thích:'}</div>
+      <div class="ex-word">${q.ex.word}</div>
+      <div class="ex-meaning">→ ${q.ex.meaning}</div>
+      <div class="ex-tip">💡 ${q.ex.tip}</div>
+      ${q.ex.trap ? `<div class="ex-trap">⚠️ Bẫy thường gặp: ${q.ex.trap}</div>` : ''}
+    </div>`;
+  }
+
+  html += '</div>';
+  document.getElementById('q-area').innerHTML = html;
+  updateNav();
+  updateSubmitBtn();
+}
+
+function selectOpt(i) {
+  if (answers[curIdx] !== -1) return; // đã trả lời rồi
+  answers[curIdx] = i;
+  renderQ();
+}
+
+function updateSubmitBtn() {
+  const answered = answers.filter(a => a !== -1).length;
+  const btn = document.getElementById('submit-btn');
+  if (btn) btn.textContent = `Nộp bài (${answered}/${activeQs.length})`;
+}
+
+// ═══════════════════════════════════════════════════════
+//  SUBMIT & RESULT
+// ═══════════════════════════════════════════════════════
+function submitQuiz() {
+  const correct = answers.filter((a, i) => a === activeQs[i].ans).length;
+  const wrong = answers.filter((a, i) => a !== -1 && a !== activeQs[i].ans).length;
+  const skipped = answers.filter(a => a === -1).length;
+  const pct = Math.round(correct / activeQs.length * 100);
+
+  // Wrong questions list (for retry)
+  const wrongQsList = activeQs.filter((_, i) => answers[i] !== activeQs[i].ans && answers[i] !== -1);
+  const skippedQsList = activeQs.filter((_, i) => answers[i] === -1);
+  const retryList = [...wrongQsList, ...skippedQsList];
+
+  document.getElementById('quiz-screen').style.display = 'none';
+  const rs = document.getElementById('result-screen');
+  rs.style.display = 'flex';
+  rs.style.flexDirection = 'column';
+
+  const stroke = 2 * Math.PI * 48;
+  const dash = stroke * (1 - pct / 100);
+  const emoji = pct >= 80 ? '🏆' : pct >= 60 ? '💪' : '📚';
+  const msg = pct >= 80 ? 'Xuất sắc! Bạn nắm từ vựng rất tốt!' : pct >= 60 ? 'Khá tốt! Ôn thêm một chút nữa nhé.' : 'Cần ôn thêm! Hãy làm lại nhé.';
+
+  let wrongListHTML = '';
+  if (retryList.length > 0) {
+    wrongListHTML = `<div style="font-size:0.82rem;color:#dc2626;font-weight:700;margin-bottom:6px;align-self:flex-start;max-width:400px;padding:0 4px">
+      Các câu cần ôn lại (${retryList.length} câu):
+    </div>
+    <div class="wrong-list">
+      ${retryList.map((q, idx) => `
+        <div class="wrong-item">
+          <span class="wrong-num">${idx + 1}.</span>
+          <span class="wrong-q">${q.q.length > 70 ? q.q.substring(0, 70) + '...' : q.q}</span>
+        </div>`).join('')}
+    </div>`;
+  }
+
+  rs.innerHTML = `
+    <div style="font-size:2.5rem;margin:4px 0">${emoji}</div>
+    <h2>Kết Quả ${isRetryMode ? '(Ôn lại)' : ''}</h2>
+    <div class="score-ring">
+      <svg width="120" height="120" viewBox="0 0 120 120">
+        <circle cx="60" cy="60" r="48" fill="none" stroke="#ede9fe" stroke-width="10"/>
+        <circle cx="60" cy="60" r="48" fill="none" stroke="#7C3AED" stroke-width="10"
+          stroke-dasharray="${stroke.toFixed(1)}" stroke-dashoffset="${dash.toFixed(1)}" stroke-linecap="round"/>
+      </svg>
+      <div class="score-num">${pct}%</div>
+    </div>
+    <div class="chips-row">
+      <span class="r-chip chip-c">✓ Đúng: ${correct}</span>
+      <span class="r-chip chip-w">✗ Sai: ${wrong}</span>
+      <span class="r-chip chip-s">— Bỏ: ${skipped}</span>
+    </div>
+    <p class="result-msg">${msg}</p>
+    ${wrongListHTML}
+    <div class="result-btns">
+      ${retryList.length > 0 ? `<button class="btn-retry" onclick="retryWrong()">🔁 Ôn lại ${retryList.length} câu sai</button>` : ''}
+      <button class="btn-redo" onclick="redoQuiz()">🔄 Làm lại từ đầu</button>
+    </div>
+  `;
+
+  // Store retry list for use
+  window._retryList = retryList;
+}
+
+function retryWrong() {
+  if (window._retryList && window._retryList.length > 0) {
+    startRetry(shuffle([...window._retryList]));
+  }
+}
+
+function redoQuiz() {
+  document.getElementById('result-screen').style.display = 'none';
+  document.getElementById('start-screen').style.display = 'flex';
+  isRetryMode = false;
+}
+
+// ═══════════════════════════════════════════════════════
+//  PWA
+// ═══════════════════════════════════════════════════════
+const PWA_NAME = "VI NOTE 15.06 – Bài Tập", PWA_SHORT = "VI NOTE BT", PWA_EMOJI = "🎯", PWA_COLOR = "#7C3AED";
+function genIcon(s) {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${s}" viewBox="0 0 ${s} ${s}">
+    <rect width="${s}" height="${s}" rx="${s*.22}" fill="${PWA_COLOR}"/>
+    <text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle" font-size="${s*.4}">${PWA_EMOJI}</text>
+    <text x="50%" y="82%" text-anchor="middle" font-size="${s*.1}" font-family="sans-serif" fill="rgba(255,255,255,0.9)" font-weight="bold">${PWA_SHORT}</text>
+  </svg>`;
+  return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
+}
+function injectManifest() {
+  const m = { name: PWA_NAME, short_name: PWA_SHORT, start_url: './', display: 'standalone', background_color: '#f5f3ff', theme_color: PWA_COLOR, orientation: 'portrait', icons: [{ src: genIcon(192), sizes: '192x192', type: 'image/svg+xml', purpose: 'any maskable' }, { src: genIcon(512), sizes: '512x512', type: 'image/svg+xml', purpose: 'any maskable' }] };
+  const b = new Blob([JSON.stringify(m)], { type: 'application/json' });
+  const l = document.createElement('link'); l.rel = 'manifest'; l.href = URL.createObjectURL(b);
+  document.head.appendChild(l);
+  document.querySelector('link[rel="apple-touch-icon"]').href = genIcon(180);
+}
+function registerSW() {
+  if (!('serviceWorker' in navigator)) return;
+  const c = `const CACHE='quiz-v2';self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(['./'])));self.skipWaiting();});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));self.clients.claim();});self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('./'))));});`;
+  const b = new Blob([c], { type: 'application/javascript' });
+  navigator.serviceWorker.register(URL.createObjectURL(b)).catch(() => {});
+}
+let deferInstall = null;
+function handleInstall() {
+  if (deferInstall) { deferInstall.prompt(); }
+  else if (/iPhone|iPad|iPod/.test(navigator.userAgent)) { document.getElementById('ios-modal').classList.add('show'); }
+}
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferInstall = e; document.getElementById('install-btn').style.display = 'block'; });
+
+document.addEventListener('DOMContentLoaded', () => {
+  injectManifest(); registerSW();
+  if (/iPhone|iPad|iPod/.test(navigator.userAgent) && !window.navigator.standalone) {
+    document.getElementById('install-btn').style.display = 'block';
+  }
+});
+</script>
+</body>
+</html>
